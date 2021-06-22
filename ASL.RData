@@ -1,0 +1,48 @@
+set.seed(2)
+
+# randomForest()
+library("randomForest")
+
+# confusionMatrix()
+library("caret")
+
+origdata <- read.table("dataframe.txt", header=TRUE)
+
+# Subset out only the hist data
+data <- origdata[,(ncol(data)-516):ncol(data)]
+
+data$Quality <- as.factor(data$Quality)
+
+rans <- sample(2, nrow(data), replace=T, prob = c(0.8,0.2))
+
+train <- data[rans == 1,]
+test <- data[rans == 2,]
+
+
+# Here I used the entire data set as a training set
+rf <- randomForest(Quality ~ ., data = data,
+                    ntree= 10001 ,
+                    proximity = TRUE,
+                    n_estimators = 1000,
+                    max_features = 1,
+                    corr.bias = TRUE,
+                    criterion = "entropy"
+                    )
+
+p1 <- predict(rf, train)
+cmat1 <- confusionMatrix(p1, train$Quality)
+p2 <- predict(rf, test)
+cmat2 <- confusionMatrix(p2, test$Quality)
+cmat2
+
+save(rf, file = "ASL.RData")
+
+pdf("Check.pdf")
+for (file in origdata$files) {
+  img <- load.image(file)
+  plot(img, main=paste(df$Quality[index], "---", files[index]))
+  }
+dev.off()
+
+testdata <- cbind(test, p2)
+write.table(testdata, "testdata.predicted.txt", sep="\t", quote=FALSE)
